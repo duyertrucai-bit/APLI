@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de tienda</title>
+<style>
+:root {
+  --bg:       #f8f9fc;
+  --surface:  #ffffff;
+  --surface2: #f3f4f6;
+  --border:   #e5e7eb;
+  --brand:    #6c63ff;
+  --brand2:   #a78bfa;
+  --text:     #111827;
+  --muted:    #6b7280;
+  --success:  #16a34a;
+  --danger:   #dc2626;
+  --warning:  #d97706;
+  --radius:   12px;
+  --font:     'Inter', system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; }
+
+/* LOGIN */
+#login-screen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #ede9fe 0%, #f8f9fc 60%);
+}
+.login-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 44px 36px; width: 100%; max-width: 380px;
+  box-shadow: 0 12px 40px rgba(108,99,255,.12);
+}
+.login-logo { font-size: 36px; margin-bottom: 8px; }
+.login-box h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.login-box p  { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.field input, .field textarea, .field select {
+  width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 9px; padding: 11px 14px; font-size: 14px; color: var(--text);
+  font-family: var(--font); transition: border-color .2s;
+}
+.field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--brand); }
+.field textarea { resize: vertical; min-height: 80px; }
+.btn-primary {
+  width: 100%; background: var(--brand); color: #fff; border: none;
+  border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .88; }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+/* LAYOUT */
+#app { display: none; }
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 220px;
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; z-index: 100;
+}
+.sidebar-logo { padding: 20px; border-bottom: 1px solid var(--border); }
+.store-avatar {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--brand), var(--brand2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 8px;
+}
+.store-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.store-plan { font-size: 11px; color: var(--muted); }
+nav { flex: 1; padding: 12px 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 9px; cursor: pointer;
+  color: var(--muted); font-size: 13px; font-weight: 500;
+  transition: all .15s; margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--brand); color: #fff; }
+.nav-item .ico { font-size: 16px; width: 20px; text-align: center; }
+.sidebar-foot { padding: 14px; border-top: 1px solid var(--border); }
+.sidebar-foot button {
+  width: 100%; background: none; border: 1px solid var(--border);
+  color: var(--muted); border-radius: 8px; padding: 8px; font-size: 12px; cursor: pointer;
+}
+.sidebar-foot button:hover { border-color: var(--danger); color: var(--danger); }
+
+.main { margin-left: 220px; padding: 28px; min-height: 100vh; }
+.page { display: none; }
+.page.active { display: block; }
+.page-header { margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; }
+.page-header h2 { font-size: 22px; font-weight: 800; }
+.page-header p  { color: var(--muted); font-size: 13px; margin-top: 3px; }
+
+/* CARDS */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 14px; margin-bottom: 24px; }
+.kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+.kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; margin-bottom: 6px; }
+.kpi-val   { font-size: 28px; font-weight: 800; }
+.kpi-val.purple { color: var(--brand); }
+.kpi-val.green  { color: var(--success); }
+.kpi-val.yellow { color: var(--warning); }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; }
+.card-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card-head h3 { font-size: 14px; font-weight: 700; }
+.card-actions { display: flex; gap: 8px; align-items: center; }
+
+.btn-sm { padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s; white-space: nowrap; }
+.btn-sm:hover { opacity: .82; }
+.btn-brand   { background: var(--brand);   color: #fff; }
+.btn-danger  { background: var(--danger);  color: #fff; }
+.btn-ghost   { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-warning { background: var(--warning); color: #fff; }
+
+table { width: 100%; border-collapse: collapse; }
+th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); background: var(--surface2); }
+td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafafa; }
+
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-green  { background: #dcfce7; color: var(--success); }
+.badge-red    { background: #fee2e2; color: var(--danger); }
+.badge-yellow { background: #fef3c7; color: var(--warning); }
+.badge-gray   { background: var(--surface2); color: var(--muted); }
+.badge-blue   { background: #dbeafe; color: #2563eb; }
+
+.prod-img-th { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: var(--surface2); }
+.prod-img-ph { width: 44px; height: 44px; border-radius: 8px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+/* MODAL */
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
+.modal-bg.open { display: flex; }
+.modal { background: var(--surface); border-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.modal-head { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--surface); }
+.modal-head h3 { font-size: 16px; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 20px; color: var(--muted); cursor: pointer; }
+.modal-body { padding: 22px; }
+.modal-foot { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* TOAST */
+#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; padding: 12px 22px; border-radius: 30px; font-size: 14px; font-weight: 500; display: none; z-index: 999; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+#toast.ok  { background: var(--success); }
+#toast.err { background: var(--danger); }
+
+/* CONFIG */
+.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.color-preview { width: 32px; height: 32px; border-radius: 8px; border: 2px solid var(--border); cursor: pointer; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty-state .ico { font-size: 48px; margin-bottom: 12px; display: block; }
+.empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+
+/* TIENDA LINK */
+.link-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.link-box span { font-size: 12px; color: var(--brand); word-break: break-all; }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 16px; }
+  .config-grid { grid-template-columns: 1fr; }
+  .row2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🏪</div>
+    <h1>Panel de tienda</h1>
+    <p>Ingresa con tu Store ID y token</p>
+    <div class="field">
+      <label>Store ID</label>
+      <input type="text" id="l-storeid" placeholder="store_XXXX_xxxx">
+    </div>
+    <div class="field">
+      <label>Token (contraseña)</label>
+      <input type="password" id="l-token" placeholder="Tu token secreto" onkeydown="if(event.key==='Enter')loginTienda()">
+    </div>
+    <button class="btn-primary" id="login-btn" onclick="loginTienda()">Entrar →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="store-avatar">🏪</div>
+      <div class="store-name" id="s-nombre">Mi Tienda</div>
+      <div class="store-plan" id="s-plan">Plan Basic</div>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="showPage('inicio')"><span class="ico">📊</span> Inicio</div>
+      <div class="nav-item" onclick="showPage('productos')"><span class="ico">📦</span> Productos</div>
+      <div class="nav-item" onclick="showPage('pedidos')"><span class="ico">🛒</span> Pedidos</div>
+      <div class="nav-item" onclick="showPage('clientes')"><span class="ico">👥</span> Clientes</div>
+      <div class="nav-item" onclick="showPage('config')"><span class="ico">⚙️</span> Configuración</div>
+    </nav>
+    <div class="sidebar-foot">
+      <button onclick="logout()">← Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- INICIO -->
+    <div class="page active" id="page-inicio">
+      <div class="page-header">
+        <div><h2>Bienvenido 👋</h2><p>Resumen de tu tienda</p></div>
+        <a id="link-tienda-btn" href="#" target="_blank" style="text-decoration:none">
+          <button class="btn-sm btn-brand">Ver mi tienda →</button>
+        </a>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Productos activos</div><div class="kpi-val purple" id="k-productos">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pedidos totales</div><div class="kpi-val green" id="k-pedidos">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Clientes</div><div class="kpi-val yellow" id="k-clientes">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pedidos pendientes</div><div class="kpi-val" id="k-pendientes">—</div></div>
+      </div>
+      <div class="link-box">
+        <span id="link-tienda-url">—</span>
+        <button class="btn-sm btn-ghost" onclick="copiarLink()">Copiar enlace</button>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Últimos pedidos</h3><button class="btn-sm btn-ghost" onclick="showPage('pedidos')">Ver todos →</button></div>
+        <table>
+          <thead><tr><th>Cliente</th><th>Total</th><th>Estado</th><th>Fecha</th></tr></thead>
+          <tbody id="inicio-pedidos"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRODUCTOS -->
+    <div class="page" id="page-productos">
+      <div class="page-header">
+        <div><h2>Productos</h2><p>Gestiona tu catálogo</p></div>
+        <button class="btn-sm btn-brand" onclick="abrirModalProducto()">+ Agregar producto</button>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3 id="prod-count">Cargando…</h3>
+          <button class="btn-sm btn-ghost" onclick="cargarProductos()">↻ Actualizar</button>
+        </div>
+        <table>
+          <thead><tr><th>Imagen</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Categoría</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="prod-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PEDIDOS -->
+    <div class="page" id="page-pedidos">
+      <div class="page-header">
+        <div><h2>Pedidos</h2><p>Gestiona los pedidos recibidos</p></div>
+        <button class="btn-sm btn-ghost" onclick="cargarPedidos()">↻ Actualizar</button>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3 id="ped-count">Todos los pedidos</h3></div>
+        <table>
+          <thead><tr><th>ID</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
+          <tbody id="ped-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div class="page" id="page-clientes">
+      <div class="page-header">
+        <div><h2>Clientes</h2><p>Base de clientes registrados</p></div>
+        <button class="btn-sm btn-ghost" onclick="cargarClientes()">↻ Actualizar</button>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3 id="cli-count">Todos los clientes</h3></div>
+        <table>
+          <thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Ciudad</th><th>Desde</th></tr></thead>
+          <tbody id="cli-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="page" id="page-config">
+      <div class="page-header">
+        <div><h2>Configuración</h2><p>Personaliza tu tienda</p></div>
+        <button class="btn-sm btn-brand" onclick="guardarConfig()">Guardar cambios</button>
+      </div>
+      <div class="card" style="max-width:640px">
+        <div class="card-head"><h3>Información de la tienda</h3></div>
+        <div class="modal-body">
+          <div class="config-grid">
+            <div class="field"><label>Nombre de la tienda</label><input type="text" id="cfg-nombre_tienda"></div>
+            <div class="field"><label>Ciudad</label><input type="text" id="cfg-ciudad"></div>
+            <div class="field"><label>WhatsApp (con código país)</label><input type="text" id="cfg-whatsapp" placeholder="573001234567"></div>
+            <div class="field"><label>Instagram</label><input type="text" id="cfg-instagram" placeholder="@mitienda"></div>
+            <div class="field"><label>Color principal</label>
+              <div style="display:flex;gap:10px;align-items:center">
+                <input type="text" id="cfg-color_primario" placeholder="#6c63ff" style="flex:1">
+                <input type="color" id="cfg-color-picker" style="width:40px;height:40px;border:none;border-radius:8px;cursor:pointer;padding:2px" oninput="document.getElementById('cfg-color_primario').value=this.value">
+              </div>
+            </div>
+            <div class="field"><label>Moneda</label>
+              <select id="cfg-moneda">
+                <option value="COP">COP — Peso colombiano</option>
+                <option value="USD">USD — Dólar</option>
+                <option value="EUR">EUR — Euro</option>
+                <option value="MXN">MXN — Peso mexicano</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>Descripción de la tienda</label><textarea id="cfg-descripcion_tienda" placeholder="Describe tu negocio en pocas palabras…"></textarea></div>
+          <div class="field"><label>URL del logo</label><input type="text" id="cfg-logo_url" placeholder="https://..."></div>
+          <div class="field"><label>URL del banner</label><input type="text" id="cfg-banner_url" placeholder="https://..."></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL PRODUCTO -->
+<div class="modal-bg" id="modal-prod">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="mp-title">Nuevo producto</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-prod')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mp-id">
+      <div class="field"><label>Nombre</label><input type="text" id="mp-nombre" placeholder="Nombre del producto"></div>
+      <div class="row2">
+        <div class="field"><label>Precio</label><input type="number" id="mp-precio" placeholder="0"></div>
+        <div class="field"><label>Stock</label><input type="number" id="mp-stock" placeholder="0"></div>
+      </div>
+      <div class="field"><label>Categoría</label><input type="text" id="mp-categoria" placeholder="Ej: Zapatos, Camisas…"></div>
+      <div class="field"><label>URL de imagen</label><input type="text" id="mp-imagen" placeholder="https://..."></div>
+      <div class="field"><label>Descripción</label><textarea id="mp-descripcion" placeholder="Descripción del producto…"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-sm btn-ghost" onclick="cerrarModal('modal-prod')">Cancelar</button>
+      <button class="btn-sm btn-brand" id="mp-btn" onclick="guardarProducto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PEDIDO -->
+<div class="modal-bg" id="modal-ped">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Detalle del pedido</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-ped')">×</button>
+    </div>
+    <div class="modal-body" id="ped-detail"></div>
+    <div class="modal-foot">
+      <button class="btn-sm btn-ghost" onclick="cerrarModal('modal-ped')">Cerrar</button>
+      <button class="btn-sm btn-success" onclick="cambiarEstadoPedido('entregado')">✓ Entregado</button>
+      <button class="btn-sm btn-warning" onclick="cambiarEstadoPedido('enviado')">↑ Enviado</button>
+      <button class="btn-sm btn-danger" onclick="cambiarEstadoPedido('cancelado')">✕ Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+const GAS_URL     = 'https://script.google.com/macros/s/AKfycbyvZUlRjL3Hz-C7Y-X_XD3ZffP-oTdt70m8qIrQB5VgDTB-3yY5deCLmKbM8-QZ0dh1/exec';
+const TIENDA_BASE = 'https://duyertrucai-bit.github.io/APLI/?store=';
+
+let _storeId = '';
+let _token   = '';
+let _plan    = '';
+let _pedidoActivo = null;
+
+// ── AUTH ──────────────────────────────────────────────────────
+async function loginTienda() {
+  const storeId = document.getElementById('l-storeid').value.trim();
+  const token   = document.getElementById('l-token').value.trim();
+  if (!storeId || !token) { toast('Completa Store ID y token', 'err'); return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Verificando…';
+
+  try {
+    const res = await api({ modulo: 'auth', accion: 'login', storeId, token });
+    if (res.ok) {
+      _storeId = res.storeId;
+      _token   = res.token;
+      _plan    = res.plan;
+      localStorage.setItem('panel_store', storeId);
+      localStorage.setItem('panel_token', token);
+      iniciarApp(res);
+    } else {
+      toast(res.error || 'Credenciales incorrectas', 'err');
+    }
+  } catch(e) { toast('Error de conexión', 'err'); }
+  finally { btn.disabled = false; btn.textContent = 'Entrar →'; }
+}
+
+function iniciarApp(res) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('s-nombre').textContent = res.nombre || 'Mi Tienda';
+  document.getElementById('s-plan').textContent   = 'Plan ' + (res.plan || 'Basic') + ' · vence ' + (res.vence || '—');
+  const link = TIENDA_BASE + _storeId;
+  document.getElementById('link-tienda-url').textContent = link;
+  document.getElementById('link-tienda-btn').href = link;
+  cargarInicio();
+  cargarProductos();
+  cargarPedidos();
+  cargarClientes();
+  cargarConfig();
+}
+
+function logout() {
+  localStorage.removeItem('panel_store');
+  localStorage.removeItem('panel_token');
+  location.reload();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const s = localStorage.getItem('panel_store');
+  const t = localStorage.getItem('panel_token');
+  if (s && t) {
+    document.getElementById('l-storeid').value = s;
+    document.getElementById('l-token').value   = t;
+    loginTienda();
+  }
+});
+
+// ── API ───────────────────────────────────────────────────────
+async function api(body) {
+  const r = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ ...body, storeId: _storeId, storeToken: _token })
+  });
+  return JSON.parse(await r.text());
+}
+
+// ── NAVEGACIÓN ────────────────────────────────────────────────
+const PAGE_NAV = { inicio: 0, productos: 1, pedidos: 2, clientes: 3, config: 4 };
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item')[PAGE_NAV[name]]?.classList.add('active');
+}
+
+// ── INICIO ────────────────────────────────────────────────────
+async function cargarInicio() {
+  const [rp, rped, rcli] = await Promise.all([
+    api({ modulo: 'productos', accion: 'listar' }),
+    api({ modulo: 'pedidos',   accion: 'listar' }),
+    api({ modulo: 'clientes',  accion: 'listar' }),
+  ]);
+  const prods    = (rp.productos   || []).filter(p => p.estado === 'activo');
+  const pedidos  = rped.pedidos    || [];
+  const clientes = rcli.clientes   || [];
+  const pendientes = pedidos.filter(p => p.estado === 'pendiente');
+
+  document.getElementById('k-productos').textContent  = prods.length;
+  document.getElementById('k-pedidos').textContent    = pedidos.length;
+  document.getElementById('k-clientes').textContent   = clientes.length;
+  document.getElementById('k-pendientes').textContent = pendientes.length;
+
+  const tbody = document.getElementById('inicio-pedidos');
+  if (!pedidos.length) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><span class="ico">🛒</span><h3>Sin pedidos aún</h3></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = pedidos.slice(-5).reverse().map(p => `
+    <tr>
+      <td><strong>${p.clienteNombre || '—'}</strong></td>
+      <td>${fmt(p.total)}</td>
+      <td>${estadoBadge(p.estado)}</td>
+      <td style="color:var(--muted)">${fechaCorta(p.creado)}</td>
+    </tr>`).join('');
+}
+
+// ── PRODUCTOS ─────────────────────────────────────────────────
+let _productos = [];
+async function cargarProductos() {
+  const res = await api({ modulo: 'productos', accion: 'listar' });
+  _productos = res.productos || [];
+  const activos = _productos.filter(p => p.estado === 'activo');
+  document.getElementById('prod-count').textContent = activos.length + ' productos activos';
+
+  const tbody = document.getElementById('prod-table');
+  if (!_productos.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><span class="ico">📦</span><h3>Sin productos</h3><p>Agrega tu primer producto</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = _productos.filter(p => p.estado !== 'inactivo').map(p => `
+    <tr>
+      <td>${p.imagen
+        ? `<img class="prod-img-th" src="${p.imagen}" alt="${p.nombre}" onerror="this.outerHTML='<div class=prod-img-ph>📦</div>'">`
+        : '<div class="prod-img-ph">📦</div>'}</td>
+      <td><strong>${p.nombre || '—'}</strong></td>
+      <td>${fmt(p.precio)}</td>
+      <td><span style="font-weight:700;color:${p.stock < 5 ? 'var(--danger)' : 'var(--success)'}">${p.stock}</span></td>
+      <td><span style="color:var(--muted)">${p.categoria || '—'}</span></td>
+      <td>${p.estado === 'activo' ? '<span class="badge badge-green">Activo</span>' : '<span class="badge badge-gray">Inactivo</span>'}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn-sm btn-ghost" onclick='editarProducto(${JSON.stringify(p)})'>Editar</button>
+        <button class="btn-sm btn-danger" onclick="eliminarProducto('${p.id}')">Quitar</button>
+      </td>
+    </tr>`).join('');
+}
+
+function abrirModalProducto() {
+  document.getElementById('mp-title').textContent = 'Nuevo producto';
+  document.getElementById('mp-id').value       = '';
+  document.getElementById('mp-nombre').value   = '';
+  document.getElementById('mp-precio').value   = '';
+  document.getElementById('mp-stock').value    = '';
+  document.getElementById('mp-categoria').value= '';
+  document.getElementById('mp-imagen').value   = '';
+  document.getElementById('mp-descripcion').value = '';
+  document.getElementById('mp-btn').textContent = 'Crear producto';
+  abrirModal('modal-prod');
+}
+
+function editarProducto(p) {
+  document.getElementById('mp-title').textContent    = 'Editar producto';
+  document.getElementById('mp-id').value             = p.id;
+  document.getElementById('mp-nombre').value         = p.nombre   || '';
+  document.getElementById('mp-precio').value         = p.precio   || '';
+  document.getElementById('mp-stock').value          = p.stock    || '';
+  document.getElementById('mp-categoria').value      = p.categoria|| '';
+  document.getElementById('mp-imagen').value         = p.imagen   || '';
+  document.getElementById('mp-descripcion').value    = p.descripcion || '';
+  document.getElementById('mp-btn').textContent = 'Guardar cambios';
+  abrirModal('modal-prod');
+}
+
+async function guardarProducto() {
+  const id     = document.getElementById('mp-id').value;
+  const nombre = document.getElementById('mp-nombre').value.trim();
+  const precio = document.getElementById('mp-precio').value;
+  const stock  = document.getElementById('mp-stock').value;
+  if (!nombre || !precio) { toast('Nombre y precio son requeridos', 'err'); return; }
+
+  const btn = document.getElementById('mp-btn');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+
+  const body = {
+    modulo: 'productos',
+    accion: id ? 'editar' : 'crear',
+    id, nombre,
+    precio: parseFloat(precio),
+    stock:  parseInt(stock) || 0,
+    categoria:   document.getElementById('mp-categoria').value.trim(),
+    imagen:      document.getElementById('mp-imagen').value.trim(),
+    descripcion: document.getElementById('mp-descripcion').value.trim(),
+  };
+
+  try {
+    const res = await api(body);
+    if (res.ok) {
+      toast(id ? 'Producto actualizado ✓' : 'Producto creado ✓', 'ok');
+      cerrarModal('modal-prod');
+      cargarProductos();
+      cargarInicio();
+    } else toast(res.error, 'err');
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+  finally { btn.disabled = false; btn.textContent = id ? 'Guardar cambios' : 'Crear producto'; }
+}
+
+async function eliminarProducto(id) {
+  if (!confirm('¿Eliminar este producto?')) return;
+  const res = await api({ modulo: 'productos', accion: 'eliminar', id });
+  if (res.ok) { toast('Producto eliminado', 'ok'); cargarProductos(); }
+  else toast(res.error, 'err');
+}
+
+// ── PEDIDOS ───────────────────────────────────────────────────
+let _pedidos = [];
+async function cargarPedidos() {
+  const res = await api({ modulo: 'pedidos', accion: 'listar' });
+  _pedidos = (res.pedidos || []).reverse();
+  document.getElementById('ped-count').textContent = _pedidos.length + ' pedidos';
+
+  const tbody = document.getElementById('ped-table');
+  if (!_pedidos.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><span class="ico">🛒</span><h3>Sin pedidos aún</h3></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = _pedidos.map(p => `
+    <tr style="cursor:pointer" onclick='verPedido(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+      <td style="color:var(--muted);font-size:11px">${(p.id||'').slice(-8)}</td>
+      <td><strong>${p.clienteNombre || '—'}</strong></td>
+      <td><strong>${fmt(p.total)}</strong></td>
+      <td>${estadoBadge(p.estado)}</td>
+      <td style="color:var(--muted)">${fechaCorta(p.creado)}</td>
+      <td><button class="btn-sm btn-ghost" onclick='event.stopPropagation();verPedido(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Ver →</button></td>
+    </tr>`).join('');
+}
+
+function verPedido(p) {
+  _pedidoActivo = p;
+  let items = [];
+  try { items = typeof p.items === 'string' ? JSON.parse(p.items) : (p.items || []); } catch(e) {}
+
+  document.getElementById('ped-detail').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px">CLIENTE</div>
+      <strong>${p.clienteNombre || '—'}</strong>
+      ${p.clienteEmail ? '<div style="font-size:13px;color:var(--muted)">' + p.clienteEmail + '</div>' : ''}
+      ${p.notas ? '<div style="font-size:12px;color:var(--muted);margin-top:6px">' + p.notas + '</div>' : ''}
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px">
+      ${items.map(i => `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px"><span>${i.nombre} × ${i.cantidad}</span><span>${fmt(i.precioUnitario * i.cantidad)}</span></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:8px;border-top:1px solid var(--border);font-weight:700"><span>Total</span><span>${fmt(p.total)}</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:13px;color:var(--muted)">Estado actual:</span>
+      ${estadoBadge(p.estado)}
+    </div>`;
+  abrirModal('modal-ped');
+}
+
+async function cambiarEstadoPedido(estado) {
+  if (!_pedidoActivo) return;
+  const res = await api({ modulo: 'pedidos', accion: 'actualizarEstado', id: _pedidoActivo.id, estado });
+  if (res.ok) { toast('Estado actualizado a ' + estado, 'ok'); cerrarModal('modal-ped'); cargarPedidos(); cargarInicio(); }
+  else toast(res.error, 'err');
+}
+
+// ── CLIENTES ──────────────────────────────────────────────────
+async function cargarClientes() {
+  const res = await api({ modulo: 'clientes', accion: 'listar' });
+  const clientes = (res.clientes || []).reverse();
+  document.getElementById('cli-count').textContent = clientes.length + ' clientes';
+
+  const tbody = document.getElementById('cli-table');
+  if (!clientes.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><span class="ico">👥</span><h3>Sin clientes aún</h3></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = clientes.map(c => `
+    <tr>
+      <td><strong>${c.nombre || '—'}</strong></td>
+      <td>${c.email || '—'}</td>
+      <td>${c.telefono || '—'}</td>
+      <td style="color:var(--muted)">${c.direccion || '—'}</td>
+      <td style="color:var(--muted)">${fechaCorta(c.creado)}</td>
+    </tr>`).join('');
+}
+
+// ── CONFIG ────────────────────────────────────────────────────
+const CFG_CAMPOS = ['nombre_tienda','ciudad','whatsapp','instagram','color_primario','moneda','descripcion_tienda','logo_url','banner_url'];
+async function cargarConfig() {
+  const res = await api({ modulo: 'config', accion: 'obtener' });
+  if (!res.ok) return;
+  const cfg = res.config || {};
+  CFG_CAMPOS.forEach(k => {
+    const el = document.getElementById('cfg-' + k);
+    if (el) el.value = cfg[k] || '';
+  });
+  const color = cfg.color_primario;
+  if (color) document.getElementById('cfg-color-picker').value = color;
+}
+
+async function guardarConfig() {
+  const btn = document.querySelector('[onclick="guardarConfig()"]');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    for (const k of CFG_CAMPOS) {
+      const el = document.getElementById('cfg-' + k);
+      if (!el) continue;
+      await api({ modulo: 'config', accion: 'guardar', clave: k, valor: el.value.trim() });
+    }
+    toast('Configuración guardada ✓', 'ok');
+  } catch(e) { toast('Error al guardar', 'err'); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar cambios'; }
+}
+
+// ── UTILIDADES ────────────────────────────────────────────────
+function estadoBadge(e) {
+  const map = {
+    pendiente:  '<span class="badge badge-yellow">Pendiente</span>',
+    enviado:    '<span class="badge badge-blue">Enviado</span>',
+    entregado:  '<span class="badge badge-green">Entregado</span>',
+    cancelado:  '<span class="badge badge-red">Cancelado</span>',
+  };
+  return map[e] || '<span class="badge badge-gray">' + (e||'—') + '</span>';
+}
+
+function fmt(n) {
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(parseFloat(n) || 0);
+}
+
+function fechaCorta(f) {
+  if (!f) return '—';
+  try { return new Date(f).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' }); } catch(e) { return f; }
+}
+
+function copiarLink() {
+  navigator.clipboard.writeText(TIENDA_BASE + _storeId).then(() => toast('Enlace copiado ✓', 'ok'));
+}
+
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarModal('modal-prod'); cerrarModal('modal-ped'); } });
+
+function toast(msg, tipo = 'info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = tipo; el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.style.display = 'none', 3000);
+}
+</script>
+</body>
+</html>

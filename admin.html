@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — SaaS Tiendas</title>
+<style>
+:root {
+  --bg:       #0f1117;
+  --surface:  #1a1d27;
+  --surface2: #22263a;
+  --border:   #2e3248;
+  --brand:    #6c63ff;
+  --brand2:   #a78bfa;
+  --text:     #f0f0f8;
+  --muted:    #8b8fa8;
+  --success:  #22c55e;
+  --danger:   #ef4444;
+  --warning:  #f59e0b;
+  --radius:   12px;
+  --font:     'Inter', system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; }
+
+/* LOGIN */
+#login-screen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 60% 40%, #1e1b4b 0%, var(--bg) 70%);
+}
+.login-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 48px 40px; width: 100%; max-width: 380px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.5);
+}
+.login-logo { font-size: 32px; margin-bottom: 8px; }
+.login-box h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.login-box p  { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.field input {
+  width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 9px; padding: 12px 14px; font-size: 14px; color: var(--text);
+  transition: border-color .2s;
+}
+.field input:focus { outline: none; border-color: var(--brand); }
+.btn-primary {
+  width: 100%; background: var(--brand); color: #fff; border: none;
+  border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: opacity .15s; margin-top: 4px;
+}
+.btn-primary:hover { opacity: .88; }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+/* LAYOUT */
+#app { display: none; min-height: 100vh; }
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 220px;
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; z-index: 100;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-icon { font-size: 24px; }
+.sidebar-logo .logo-name { font-size: 16px; font-weight: 800; color: var(--brand2); }
+.sidebar-logo .logo-sub  { font-size: 11px; color: var(--muted); }
+nav { flex: 1; padding: 16px 10px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 9px; cursor: pointer;
+  color: var(--muted); font-size: 13px; font-weight: 500;
+  transition: all .15s; margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--brand); color: #fff; }
+.nav-item .ico { font-size: 16px; width: 20px; text-align: center; }
+.sidebar-foot { padding: 16px; border-top: 1px solid var(--border); }
+.sidebar-foot button {
+  width: 100%; background: none; border: 1px solid var(--border);
+  color: var(--muted); border-radius: 8px; padding: 9px; font-size: 12px;
+  cursor: pointer; transition: all .15s;
+}
+.sidebar-foot button:hover { border-color: var(--danger); color: var(--danger); }
+
+.main { margin-left: 220px; padding: 32px; min-height: 100vh; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* HEADER */
+.page-header { margin-bottom: 28px; }
+.page-header h2 { font-size: 24px; font-weight: 800; }
+.page-header p  { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+/* KPI CARDS */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.kpi-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+}
+.kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-bottom: 8px; }
+.kpi-val   { font-size: 32px; font-weight: 800; line-height: 1; }
+.kpi-val.green  { color: var(--success); }
+.kpi-val.purple { color: var(--brand2); }
+.kpi-val.yellow { color: var(--warning); }
+.kpi-val.red    { color: var(--danger); }
+
+/* TABLE */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 24px;
+}
+.card-head {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.card-head h3 { font-size: 15px; font-weight: 700; }
+.card-actions { display: flex; gap: 8px; }
+.btn-sm {
+  padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: none; transition: opacity .15s;
+}
+.btn-sm:hover { opacity: .82; }
+.btn-brand  { background: var(--brand);   color: #fff; }
+.btn-danger { background: var(--danger);  color: #fff; }
+.btn-ghost  { background: var(--surface2); color: var(--text); }
+.btn-success { background: var(--success); color: #fff; }
+
+table { width: 100%; border-collapse: collapse; }
+th { padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); }
+td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+}
+.badge-green  { background: #14532d33; color: var(--success); }
+.badge-red    { background: #7f1d1d33; color: var(--danger); }
+.badge-yellow { background: #78350f33; color: var(--warning); }
+.badge-blue   { background: #1e3a5f33; color: #60a5fa; }
+
+/* MODAL */
+.modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.7); z-index: 500;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 480px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6);
+}
+.modal-head {
+  padding: 20px 24px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-head h3 { font-size: 16px; font-weight: 700; }
+.modal-close { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+.modal-body { padding: 24px; }
+.modal-foot { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+
+select {
+  width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 9px; padding: 11px 14px; font-size: 14px; color: var(--text);
+}
+select:focus { outline: none; border-color: var(--brand); }
+
+/* TOAST */
+#toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--surface2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 20px; font-size: 13px; font-weight: 500;
+  display: none; z-index: 999; box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  max-width: 320px;
+}
+#toast.ok  { border-color: var(--success); color: var(--success); }
+#toast.err { border-color: var(--danger);  color: var(--danger);  }
+
+/* TIENDA DETAIL */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.detail-item label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; margin-bottom: 3px; }
+.detail-item span  { font-size: 14px; font-weight: 500; word-break: break-all; }
+.copy-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-size: 11px; color: var(--muted); cursor: pointer; margin-left: 6px; }
+.copy-btn:hover { border-color: var(--brand); color: var(--brand); }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty-state .ico { font-size: 48px; margin-bottom: 12px; display: block; }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🛍️</div>
+    <h1>Panel Admin</h1>
+    <p>Acceso exclusivo para el administrador del sistema</p>
+    <div class="field">
+      <label>Token de administrador</label>
+      <input type="password" id="login-token" placeholder="Tu token secreto" onkeydown="if(event.key==='Enter')login()">
+    </div>
+    <div class="field">
+      <label>URL del backend</label>
+      <input type="text" id="login-url" placeholder="https://script.google.com/..." value="https://script.google.com/macros/s/AKfycbyvZUlRjL3Hz-C7Y-X_XD3ZffP-oTdt70m8qIrQB5VgDTB-3yY5deCLmKbM8-QZ0dh1/exec">
+    </div>
+    <button class="btn-primary" id="login-btn" onclick="login()">Entrar →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🛍️</div>
+      <div class="logo-name">SaaS Admin</div>
+      <div class="logo-sub">Panel maestro</div>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="showPage('dashboard')"><span class="ico">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="showPage('tiendas')"><span class="ico">🏪</span> Tiendas</div>
+      <div class="nav-item" onclick="showPage('crear')"><span class="ico">➕</span> Nueva tienda</div>
+    </nav>
+    <div class="sidebar-foot">
+      <button onclick="logout()">← Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <p>Resumen general del sistema</p>
+      </div>
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Total tiendas</div><div class="kpi-val purple" id="kpi-total">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Activas</div><div class="kpi-val green" id="kpi-activas">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Suspendidas</div><div class="kpi-val red" id="kpi-suspendidas">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Plan Basic</div><div class="kpi-val" id="kpi-basic">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Plan Standard</div><div class="kpi-val yellow" id="kpi-standard">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Plan Premium</div><div class="kpi-val purple" id="kpi-premium">—</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Tiendas recientes</h3>
+          <button class="btn-sm btn-ghost" onclick="showPage('tiendas')">Ver todas →</button>
+        </div>
+        <table>
+          <thead><tr><th>Tienda</th><th>Plan</th><th>Estado</th><th>Vence</th></tr></thead>
+          <tbody id="dashboard-table"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:30px">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TIENDAS -->
+    <div class="page" id="page-tiendas">
+      <div class="page-header">
+        <h2>Tiendas</h2>
+        <p>Gestiona todas las tiendas del sistema</p>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3 id="tiendas-count">Todas las tiendas</h3>
+          <div class="card-actions">
+            <button class="btn-sm btn-ghost" onclick="cargarTiendas()">↻ Actualizar</button>
+            <button class="btn-sm btn-brand" onclick="showPage('crear')">+ Nueva</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Nombre</th><th>Email</th><th>Plan</th><th>Estado</th><th>Vence</th><th>Acciones</th></tr></thead>
+          <tbody id="tiendas-table"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CREAR -->
+    <div class="page" id="page-crear">
+      <div class="page-header">
+        <h2>Nueva tienda</h2>
+        <p>Crea una tienda nueva en el sistema</p>
+      </div>
+      <div class="card" style="max-width:520px">
+        <div class="card-head"><h3>Datos de la tienda</h3></div>
+        <div class="modal-body">
+          <div class="field"><label>Nombre de la tienda</label><input type="text" id="c-nombre" placeholder="Ej: Calzado Pérez"></div>
+          <div class="field"><label>Email del dueño</label><input type="email" id="c-email" placeholder="dueno@email.com"></div>
+          <div class="field"><label>Plan</label>
+            <select id="c-plan">
+              <option value="Basic">Basic — $49.000/mes (50 productos)</option>
+              <option value="Standard">Standard — $99.000/mes (200 productos)</option>
+              <option value="Premium">Premium — $199.000/mes (ilimitado)</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <button class="btn-sm btn-ghost" style="flex:0;padding:10px 18px" onclick="showPage('tiendas')">Cancelar</button>
+            <button class="btn-primary" style="margin:0" id="crear-btn" onclick="crearTienda()">Crear tienda →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE TIENDA -->
+<div class="modal-bg" id="modal-tienda">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="mt-nombre">Detalle tienda</h3>
+      <button class="modal-close" onclick="cerrarModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-item"><label>Store ID</label><span id="mt-id">—</span><button class="copy-btn" onclick="copiar('mt-id')">Copiar</button></div>
+        <div class="detail-item"><label>Email</label><span id="mt-email">—</span></div>
+        <div class="detail-item"><label>Plan</label><span id="mt-plan">—</span></div>
+        <div class="detail-item"><label>Estado</label><span id="mt-estado">—</span></div>
+        <div class="detail-item"><label>Vencimiento</label><span id="mt-vence">—</span></div>
+        <div class="detail-item"><label>Token</label><span id="mt-token">—</span><button class="copy-btn" onclick="copiar('mt-token')">Copiar</button></div>
+      </div>
+      <div style="background:var(--bg);border-radius:9px;padding:14px;margin-bottom:16px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">ENLACE TIENDA PÚBLICA</div>
+        <div id="mt-link" style="font-size:12px;word-break:break-all;color:var(--brand2)">—</div>
+        <button class="copy-btn" style="margin-top:6px" onclick="copiarTexto(document.getElementById('mt-link').textContent)">Copiar enlace</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm btn-brand" onclick="cambiarPlan()">Cambiar plan</button>
+        <button class="btn-sm btn-success" onclick="activarTienda()">Activar</button>
+        <button class="btn-sm btn-danger" onclick="suspenderTienda()">Suspender</button>
+        <button class="btn-sm btn-ghost" onclick="resetToken()">Reset token</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+const GAS_URL = document.getElementById('login-url')?.value || '';
+let _token  = '';
+let _gasUrl = '';
+let _tiendaActiva = null;
+const TIENDA_BASE_URL = 'https://duyertrucai-bit.github.io/APLI/?store=';
+
+// ── AUTH ──────────────────────────────────────────────────────
+async function login() {
+  const token = document.getElementById('login-token').value.trim();
+  const url   = document.getElementById('login-url').value.trim();
+  if (!token || !url) { toast('Completa todos los campos', 'err'); return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Verificando…';
+
+  try {
+    const res = await api({ modulo: 'admin', accion: 'dashboard', adminToken: token }, url);
+    if (res.ok) {
+      _token  = token;
+      _gasUrl = url;
+      localStorage.setItem('admin_token', token);
+      localStorage.setItem('admin_url', url);
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      cargarDashboard();
+      cargarTiendas();
+    } else {
+      toast(res.error || 'Token incorrecto', 'err');
+    }
+  } catch(e) { toast('Error de conexión', 'err'); }
+  finally { btn.disabled = false; btn.textContent = 'Entrar →'; }
+}
+
+function logout() {
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_url');
+  location.reload();
+}
+
+// Auto-login
+window.addEventListener('DOMContentLoaded', () => {
+  const t = localStorage.getItem('admin_token');
+  const u = localStorage.getItem('admin_url');
+  if (t && u) {
+    document.getElementById('login-token').value = t;
+    document.getElementById('login-url').value   = u;
+    _token = t; _gasUrl = u;
+    login();
+  }
+});
+
+// ── API ───────────────────────────────────────────────────────
+async function api(body, url) {
+  const r = await fetch(url || _gasUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(body)
+  });
+  return JSON.parse(await r.text());
+}
+
+// ── NAVEGACIÓN ────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const idx = { dashboard: 0, tiendas: 1, crear: 2 };
+  document.querySelectorAll('.nav-item')[idx[name]]?.classList.add('active');
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+async function cargarDashboard() {
+  const res = await api({ modulo: 'admin', accion: 'dashboard', adminToken: _token });
+  if (!res.ok) return;
+  document.getElementById('kpi-total').textContent      = res.total || 0;
+  document.getElementById('kpi-activas').textContent    = res.activas || 0;
+  document.getElementById('kpi-suspendidas').textContent= res.suspendidas || 0;
+  document.getElementById('kpi-basic').textContent      = res.porPlan?.Basic || 0;
+  document.getElementById('kpi-standard').textContent   = res.porPlan?.Standard || 0;
+  document.getElementById('kpi-premium').textContent    = res.porPlan?.Premium || 0;
+}
+
+// ── TIENDAS ───────────────────────────────────────────────────
+async function cargarTiendas() {
+  const res = await api({ modulo: 'admin', accion: 'listarTiendas', adminToken: _token });
+  if (!res.ok) return;
+  const tiendas = res.tiendas || [];
+  document.getElementById('tiendas-count').textContent = tiendas.length + ' tiendas';
+
+  const tbody = document.getElementById('tiendas-table');
+  const dbody = document.getElementById('dashboard-table');
+
+  if (!tiendas.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><span class="ico">🏪</span>No hay tiendas aún. Crea la primera.</div></td></tr>';
+    dbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:30px">Sin tiendas aún</td></tr>';
+    return;
+  }
+
+  const estadoBadge = e => e === 'activa'
+    ? '<span class="badge badge-green">Activa</span>'
+    : '<span class="badge badge-red">Suspendida</span>';
+
+  const planBadge = p => p === 'Premium'
+    ? '<span class="badge badge-blue">Premium</span>'
+    : p === 'Standard'
+    ? '<span class="badge badge-yellow">Standard</span>'
+    : '<span class="badge">Basic</span>';
+
+  tbody.innerHTML = tiendas.map(t => `
+    <tr style="cursor:pointer" onclick='verTienda(${JSON.stringify(t)})'>
+      <td><strong>${t.nombre || '—'}</strong></td>
+      <td>${t.email || '—'}</td>
+      <td>${planBadge(t.plan)}</td>
+      <td>${estadoBadge(t.estado)}</td>
+      <td style="color:var(--muted)">${t.fechaVencimiento || '—'}</td>
+      <td><button class="btn-sm btn-ghost" onclick='event.stopPropagation();verTienda(${JSON.stringify(t)})'>Ver →</button></td>
+    </tr>`).join('');
+
+  dbody.innerHTML = tiendas.slice(0, 5).map(t => `
+    <tr>
+      <td><strong>${t.nombre || '—'}</strong></td>
+      <td>${planBadge(t.plan)}</td>
+      <td>${estadoBadge(t.estado)}</td>
+      <td style="color:var(--muted)">${t.fechaVencimiento || '—'}</td>
+    </tr>`).join('');
+}
+
+// ── DETALLE TIENDA ────────────────────────────────────────────
+function verTienda(t) {
+  _tiendaActiva = t;
+  document.getElementById('mt-nombre').textContent = t.nombre || 'Tienda';
+  document.getElementById('mt-id').textContent     = t.storeId || '—';
+  document.getElementById('mt-email').textContent  = t.email   || '—';
+  document.getElementById('mt-plan').textContent   = t.plan    || '—';
+  document.getElementById('mt-estado').textContent = t.estado  || '—';
+  document.getElementById('mt-vence').textContent  = t.fechaVencimiento || '—';
+  document.getElementById('mt-token').textContent  = t.token   || '—';
+  document.getElementById('mt-link').textContent   = TIENDA_BASE_URL + t.storeId;
+  document.getElementById('modal-tienda').classList.add('open');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-tienda').classList.remove('open');
+  _tiendaActiva = null;
+}
+
+async function suspenderTienda() {
+  if (!_tiendaActiva) return;
+  const res = await api({ modulo: 'admin', accion: 'suspenderTienda', adminToken: _token, storeId: _tiendaActiva.storeId });
+  if (res.ok) { toast('Tienda suspendida', 'ok'); cerrarModal(); cargarTiendas(); cargarDashboard(); }
+  else toast(res.error, 'err');
+}
+
+async function activarTienda() {
+  if (!_tiendaActiva) return;
+  // Activar = cambiar estado manualmente (el backend no tiene acción activar, usamos cambiarPlan para forzar)
+  toast('Para activar, edita el estado en la Sheet Maestra directamente.', 'err');
+}
+
+async function resetToken() {
+  if (!_tiendaActiva) return;
+  if (!confirm('¿Resetear el token de ' + _tiendaActiva.nombre + '? El dueño perderá acceso hasta que reciba el nuevo token.')) return;
+  const res = await api({ modulo: 'admin', accion: 'resetToken', adminToken: _token, storeId: _tiendaActiva.storeId });
+  if (res.ok) {
+    toast('Nuevo token: ' + res.token, 'ok');
+    document.getElementById('mt-token').textContent = res.token;
+    _tiendaActiva.token = res.token;
+  } else toast(res.error, 'err');
+}
+
+async function cambiarPlan() {
+  if (!_tiendaActiva) return;
+  const plan = prompt('Nuevo plan (Basic / Standard / Premium):', _tiendaActiva.plan);
+  if (!plan) return;
+  const res = await api({ modulo: 'admin', accion: 'cambiarPlan', adminToken: _token, storeId: _tiendaActiva.storeId, plan });
+  if (res.ok) { toast('Plan actualizado', 'ok'); cerrarModal(); cargarTiendas(); }
+  else toast(res.error, 'err');
+}
+
+// ── CREAR TIENDA ──────────────────────────────────────────────
+async function crearTienda() {
+  const nombre = document.getElementById('c-nombre').value.trim();
+  const email  = document.getElementById('c-email').value.trim();
+  const plan   = document.getElementById('c-plan').value;
+  if (!nombre || !email) { toast('Completa nombre y email', 'err'); return; }
+
+  const btn = document.getElementById('crear-btn');
+  btn.disabled = true; btn.textContent = 'Creando…';
+
+  try {
+    const res = await api({ modulo: 'admin', accion: 'crearTienda', adminToken: _token, nombre, email, plan });
+    if (res.ok) {
+      toast('✅ Tienda creada: ' + res.storeId, 'ok');
+      document.getElementById('c-nombre').value = '';
+      document.getElementById('c-email').value  = '';
+      cargarTiendas();
+      cargarDashboard();
+      // Mostrar resultado
+      setTimeout(() => {
+        alert('✅ Tienda creada\n\nStore ID: ' + res.storeId + '\nToken: ' + res.token + '\n\nEnlace tienda: ' + TIENDA_BASE_URL + res.storeId + '\n\nGuarda el token — es la contraseña del dueño.');
+        showPage('tiendas');
+      }, 300);
+    } else toast(res.error, 'err');
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+  finally { btn.disabled = false; btn.textContent = 'Crear tienda →'; }
+}
+
+// ── UTILIDADES ────────────────────────────────────────────────
+function copiar(id) {
+  copiarTexto(document.getElementById(id).textContent);
+}
+function copiarTexto(txt) {
+  navigator.clipboard.writeText(txt).then(() => toast('Copiado ✓', 'ok'));
+}
+
+function toast(msg, tipo = 'info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = tipo;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.style.display = 'none', 3500);
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+</script>
+</body>
+</html>
