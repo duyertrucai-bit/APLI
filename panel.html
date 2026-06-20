@@ -387,7 +387,12 @@ async function loginTienda() {
   btn.disabled = true; btn.textContent = 'Verificando…';
 
   try {
-    const res = await api({ modulo: 'auth', accion: 'login', storeId, token });
+    const r = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ modulo: 'auth', accion: 'login', storeId, token })
+    });
+    const res = JSON.parse(await r.text());
     if (res.ok) {
       _storeId = res.storeId;
       _token   = res.token;
