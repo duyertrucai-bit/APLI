@@ -114,6 +114,18 @@ nav { flex: 1; padding: 12px 8px; }
 .btn-ghost   { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
 .btn-success { background: var(--success); color: #fff; }
 .btn-warning { background: var(--warning); color: #fff; }
+.btn-star { background: none; border: 1px solid var(--border); color: var(--muted); }
+.btn-star.active { background: #fef3c7; border-color: var(--warning); color: var(--warning); }
+.featured-banner { background: linear-gradient(135deg,#fef3c7,#fff7ed); border: 1px solid #fde68a; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.featured-banner .info { font-size: 13px; color: #92400e; }
+.featured-banner .count { font-weight: 700; }
+.toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 24px; transition: .2s; }
+.toggle-slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+input:checked + .toggle-slider { background: var(--warning); }
+input:checked + .toggle-slider:before { transform: translateX(20px); }
+.lock-msg { font-size: 11px; color: var(--muted); }
 
 table { width: 100%; border-collapse: collapse; }
 th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); background: var(--surface2); }
@@ -242,13 +254,16 @@ tr:hover td { background: #fafafa; }
         <div><h2>Productos</h2><p>Gestiona tu catálogo</p></div>
         <button class="btn-sm btn-brand" onclick="abrirModalProducto()">+ Agregar producto</button>
       </div>
+      <div class="featured-banner">
+        <div class="info">⭐ Destacados: <span class="count" id="dest-count">0</span> / <span id="dest-max">2</span> usados en tu plan <strong id="dest-plan">Basic</strong></div>
+      </div>
       <div class="card">
         <div class="card-head">
           <h3 id="prod-count">Cargando…</h3>
           <button class="btn-sm btn-ghost" onclick="cargarProductos()">↻ Actualizar</button>
         </div>
         <table>
-          <thead><tr><th>Imagen</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Categoría</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>Imagen</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Categoría</th><th>Estado</th><th>⭐</th><th>Acciones</th></tr></thead>
           <tbody id="prod-table"></tbody>
         </table>
       </div>
@@ -316,6 +331,22 @@ tr:hover td { background: #fafafa; }
           <div class="field"><label>Descripción de la tienda</label><textarea id="cfg-descripcion_tienda" placeholder="Describe tu negocio en pocas palabras…"></textarea></div>
           <div class="field"><label>URL del logo</label><input type="text" id="cfg-logo_url" placeholder="https://..."></div>
           <div class="field"><label>URL del banner</label><input type="text" id="cfg-banner_url" placeholder="https://..."></div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:640px">
+        <div class="card-head"><h3>⭐ Destacar en el directorio</h3></div>
+        <div class="modal-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+            <div>
+              <div style="font-weight:600;margin-bottom:4px">Mostrar mi tienda destacada</div>
+              <div class="lock-msg" id="dest-tienda-msg">Disponible en planes Standard y Premium</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="cfg-destacada" onchange="toggleDestacarTienda()">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
         </div>
       </div>
     </div>
@@ -420,6 +451,8 @@ function iniciarApp(res) {
   cargarPedidos();
   cargarClientes();
   cargarConfig();
+  cargarLimites();
+  document.getElementById('cfg-destacada').checked = res.destacada === true || res.destacada === 'TRUE' || res.destacada === 'true';
 }
 
 function logout() {
@@ -488,6 +521,50 @@ async function cargarInicio() {
     </tr>`).join('');
 }
 
+async function toggleDestacarProducto(id, destacado) {
+  const res = await api({ modulo: 'productos', accion: 'destacar', id, destacado });
+  if (res.ok) {
+    toast(res.msg, 'ok');
+    cargarProductos();
+  } else {
+    toast(res.error, 'err');
+  }
+}
+
+function actualizarContadorDestacados() {
+  const usados = _productos.filter(p => p.destacado === true || p.destacado === 'TRUE' || p.destacado === 'true').length;
+  document.getElementById('dest-count').textContent = usados;
+}
+
+// ── LÍMITES / PLAN ───────────────────────────────────────────
+async function cargarLimites() {
+  const res = await api({ modulo: 'tienda', accion: 'limites' });
+  if (!res.ok) return;
+  document.getElementById('dest-max').textContent  = res.maxProductosDestacados;
+  document.getElementById('dest-plan').textContent = res.plan;
+
+  const toggle = document.getElementById('cfg-destacada');
+  const msg    = document.getElementById('dest-tienda-msg');
+  if (res.puedeDestacarTienda) {
+    toggle.disabled = false;
+    msg.textContent = 'Tu tienda puede aparecer destacada en el directorio';
+  } else {
+    toggle.disabled = true;
+    msg.textContent = 'Disponible en planes Standard y Premium — tu plan actual es ' + res.plan;
+  }
+}
+
+async function toggleDestacarTienda() {
+  const checked = document.getElementById('cfg-destacada').checked;
+  const res = await api({ modulo: 'tienda', accion: 'destacar', destacada: checked });
+  if (res.ok) {
+    toast(res.msg, 'ok');
+  } else {
+    toast(res.error, 'err');
+    document.getElementById('cfg-destacada').checked = !checked;
+  }
+}
+
 // ── PRODUCTOS ─────────────────────────────────────────────────
 let _productos = [];
 async function cargarProductos() {
@@ -495,13 +572,16 @@ async function cargarProductos() {
   _productos = res.productos || [];
   const activos = _productos.filter(p => p.estado === 'activo');
   document.getElementById('prod-count').textContent = activos.length + ' productos activos';
+  actualizarContadorDestacados();
 
   const tbody = document.getElementById('prod-table');
   if (!_productos.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><span class="ico">📦</span><h3>Sin productos</h3><p>Agrega tu primer producto</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><span class="ico">📦</span><h3>Sin productos</h3><p>Agrega tu primer producto</p></div></td></tr>';
     return;
   }
-  tbody.innerHTML = _productos.filter(p => p.estado !== 'inactivo').map(p => `
+  tbody.innerHTML = _productos.filter(p => p.estado !== 'inactivo').map(p => {
+    const dest = p.destacado === true || p.destacado === 'TRUE' || p.destacado === 'true';
+    return `
     <tr>
       <td>${p.imagen
         ? `<img class="prod-img-th" src="${p.imagen}" alt="${p.nombre}" onerror="this.outerHTML='<div class=prod-img-ph>📦</div>'">`
@@ -511,11 +591,13 @@ async function cargarProductos() {
       <td><span style="font-weight:700;color:${p.stock < 5 ? 'var(--danger)' : 'var(--success)'}">${p.stock}</span></td>
       <td><span style="color:var(--muted)">${p.categoria || '—'}</span></td>
       <td>${p.estado === 'activo' ? '<span class="badge badge-green">Activo</span>' : '<span class="badge badge-gray">Inactivo</span>'}</td>
+      <td><button class="btn-sm btn-star ${dest ? 'active' : ''}" onclick="toggleDestacarProducto('${p.id}', ${!dest})" title="${dest ? 'Quitar destacado' : 'Destacar producto'}">⭐</button></td>
       <td style="display:flex;gap:6px">
         <button class="btn-sm btn-ghost" onclick='editarProducto(${JSON.stringify(p)})'>Editar</button>
         <button class="btn-sm btn-danger" onclick="eliminarProducto('${p.id}')">Quitar</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function abrirModalProducto() {

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Directorio de tiendas</title>
+<style>
+:root {
+  --bg:      #fafaf8;
+  --surface: #ffffff;
+  --border:  #e8e6e0;
+  --text:    #1a1a1a;
+  --muted:   #74726c;
+  --brand:   #6c63ff;
+  --gold:    #c9952c;
+  --gold-bg: #fdf8ed;
+  --radius:  14px;
+  --font:    'Inter', system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); }
+
+header {
+  padding: 56px 24px 40px; text-align: center;
+  background: linear-gradient(180deg, #fff 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+}
+header h1 { font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 8px; }
+header p  { color: var(--muted); font-size: 15px; max-width: 480px; margin: 0 auto; }
+
+.search-wrap { max-width: 480px; margin: 28px auto 0; padding: 0 16px; }
+.search-wrap input {
+  width: 100%; padding: 14px 18px; border: 1.5px solid var(--border);
+  border-radius: 30px; font-size: 14px; font-family: var(--font);
+  background: var(--surface);
+}
+.search-wrap input:focus { outline: none; border-color: var(--brand); }
+
+main { max-width: 1080px; margin: 0 auto; padding: 40px 20px 80px; }
+
+.section-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--gold); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label.normal { color: var(--muted); margin-top: 40px; }
+
+.grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px; margin-bottom: 8px;
+}
+
+.tienda-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; cursor: pointer;
+  transition: transform .15s, box-shadow .15s; text-decoration: none; color: inherit;
+  display: block;
+}
+.tienda-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,.08); }
+.tienda-card.destacada { border-color: var(--gold); background: var(--gold-bg); }
+
+.t-banner {
+  height: 100px; background: linear-gradient(135deg, #ddd, #eee);
+  background-size: cover; background-position: center;
+  position: relative;
+}
+.t-badge {
+  position: absolute; top: 10px; right: 10px;
+  background: var(--gold); color: #fff; font-size: 10px; font-weight: 700;
+  padding: 4px 10px; border-radius: 20px; letter-spacing: .04em;
+}
+.t-body { padding: 16px; }
+.t-logo {
+  width: 44px; height: 44px; border-radius: 10px; object-fit: cover;
+  background: #fff; border: 2px solid var(--surface); margin-top: -32px;
+  margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+.t-logo-ph {
+  width: 44px; height: 44px; border-radius: 10px; background: #e5e3dd;
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+  margin-top: -32px; margin-bottom: 10px; border: 2px solid var(--surface);
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+.t-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.t-desc { font-size: 12.5px; color: var(--muted); line-height: 1.4; margin-bottom: 10px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.t-meta { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+
+.empty-state { text-align: center; padding: 80px 20px; color: var(--muted); }
+.empty-state .ico { font-size: 48px; margin-bottom: 14px; display: block; }
+.empty-state h3 { font-size: 17px; color: var(--text); margin-bottom: 6px; }
+
+.skeleton { background: linear-gradient(90deg, #f0f0ec 25%, #e8e6e0 50%, #f0f0ec 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; height: 180px; border-radius: var(--radius); }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+footer { text-align: center; padding: 30px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🛍️ Directorio de tiendas</h1>
+  <p>Explora los negocios que confían en nuestra plataforma para vender online</p>
+  <div class="search-wrap">
+    <input type="text" id="buscador" placeholder="Buscar tienda…" oninput="filtrar()">
+  </div>
+</header>
+
+<main>
+  <div id="contenido">
+    <div class="grid">
+      <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+    </div>
+  </div>
+</main>
+
+<footer>Powered by tu plataforma SaaS</footer>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyvZUlRjL3Hz-C7Y-X_XD3ZffP-oTdt70m8qIrQB5VgDTB-3yY5deCLmKbM8-QZ0dh1/exec';
+const TIENDA_BASE = 'https://duyertrucai-bit.github.io/APLI/?store=';
+
+let _tiendas = [];
+
+async function cargar() {
+  try {
+    const r = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ modulo: 'publico', accion: 'directorio' })
+    });
+    const res = JSON.parse(await r.text());
+    if (res.ok) {
+      _tiendas = res.tiendas || [];
+      render(_tiendas);
+    } else {
+      mostrarError(res.error);
+    }
+  } catch (e) {
+    mostrarError('No se pudo conectar con el servidor');
+  }
+}
+
+function render(tiendas) {
+  const cont = document.getElementById('contenido');
+  if (!tiendas.length) {
+    cont.innerHTML = `<div class="empty-state"><span class="ico">🏪</span><h3>No hay tiendas para mostrar</h3><p>Vuelve pronto</p></div>`;
+    return;
+  }
+
+  const destacadas = tiendas.filter(t => t.destacada);
+  const normales    = tiendas.filter(t => !t.destacada);
+
+  let html = '';
+  if (destacadas.length) {
+    html += `<div class="section-label">⭐ Tiendas destacadas</div><div class="grid">${destacadas.map(card).join('')}</div>`;
+  }
+  if (normales.length) {
+    html += `<div class="section-label ${destacadas.length ? 'normal' : ''}">Todas las tiendas</div><div class="grid">${normales.map(card).join('')}</div>`;
+  }
+  cont.innerHTML = html;
+}
+
+function card(t) {
+  const cfg = t.config || {};
+  const nombre = cfg.nombre_tienda || t.nombre || 'Tienda';
+  const desc   = cfg.descripcion_tienda || '';
+  const ciudad = cfg.ciudad || '';
+  const color  = cfg.color_primario || '#6366f1';
+  const logo   = cfg.logo_url;
+  const banner = cfg.banner_url;
+
+  return `
+    <a class="tienda-card ${t.destacada ? 'destacada' : ''}" href="${TIENDA_BASE}${t.storeId}">
+      <div class="t-banner" style="${banner ? `background-image:url('${banner}')` : `background:linear-gradient(135deg, ${color}22, ${color}44)`}">
+        ${t.destacada ? '<span class="t-badge">⭐ Destacada</span>' : ''}
+      </div>
+      <div class="t-body">
+        ${logo
+          ? `<img class="t-logo" src="${logo}" alt="${nombre}" onerror="this.outerHTML='<div class=t-logo-ph>🏪</div>'">`
+          : '<div class="t-logo-ph">🏪</div>'}
+        <div class="t-name">${escapeHtml(nombre)}</div>
+        ${desc ? `<div class="t-desc">${escapeHtml(desc)}</div>` : ''}
+        ${ciudad ? `<div class="t-meta">📍 ${escapeHtml(ciudad)}</div>` : ''}
+      </div>
+    </a>`;
+}
+
+function filtrar() {
+  const q = document.getElementById('buscador').value.toLowerCase().trim();
+  if (!q) { render(_tiendas); return; }
+  const filtradas = _tiendas.filter(t => {
+    const cfg = t.config || {};
+    const nombre = (cfg.nombre_tienda || t.nombre || '').toLowerCase();
+    const ciudad = (cfg.ciudad || '').toLowerCase();
+    return nombre.includes(q) || ciudad.includes(q);
+  });
+  render(filtradas);
+}
+
+function mostrarError(msg) {
+  document.getElementById('contenido').innerHTML = `<div class="empty-state"><span class="ico">⚠️</span><h3>Algo salió mal</h3><p>${escapeHtml(msg || '')}</p></div>`;
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+cargar();
+</script>
+</body>
+</html>
